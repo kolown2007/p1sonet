@@ -34,7 +34,7 @@
           // Add a Matter.js sprite
             const imageicon = this.matter.add.sprite(width / 2, height / 3, 'img', undefined, {
             isStatic: false,
-            restitution: 1
+            restitution: .5
             });
 
             // Add event listener for device orientation
