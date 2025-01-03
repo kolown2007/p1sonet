@@ -1,18 +1,34 @@
 <script lang="ts">
-    import PhaserGame from "../setup/p1sonet.svelte";
-  </script>
-  
-  <div id="app">
-    <PhaserGame />
-  </div>
-  
-  <style>
-    #app {
+    import JOLLIBEE from "$lib/jollibee.svelte";
+</script>
+
+<svelte:head>
+  <title>P1sonet</title>
+  <meta name="description" content=" ">
+</svelte:head>
+
+<main id="main-container">
+  <JOLLIBEE />
+</main>
+
+<style>
+  :global(html, body) {
+      margin: 0;
+      padding: 0;
       width: 100%;
-      height: 100vh;
+      height: 100%;
       overflow: hidden;
+  }
+
+  #main-container {
+      height: 100vh;
+      width: 100vw;
       display: flex;
-      justify-content: center;
       align-items: center;
-    }
-  </style>
+      justify-content: center;
+  }
+</style>
+
+
+
+

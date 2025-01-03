@@ -1,5 +1,5 @@
 import { AUTO, Game } from 'phaser';
-import { DVD } from '../p1sonet/dvd';
+import { DVD } from '../lib/dvd';
 
 
 const config: Phaser.Types.Core.GameConfig = {
