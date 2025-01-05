@@ -78,7 +78,7 @@
             // Load jollibee.glb model from root
             BABYLON.SceneLoader.ImportMesh(
                 "",
-                "/",
+                "https://kolown.net/assets/p1sonet/",
                 "jollibee.glb",
                 scene,
                 (meshes) => {
