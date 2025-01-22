@@ -7,12 +7,14 @@
     onMount(async () => {
         // Create a Babylon.js scene
         const canvas = document.getElementById("babylon-canvas") as HTMLCanvasElement;
-        const engine = new BABYLON.Engine(canvas, true);
+        const engine = new BABYLON.WebGPUEngine(canvas);
+        await engine.initAsync();
 
         // Load Havok Physics WASM file
         const havokInstance = await HavokPhysics({
             locateFile: (path) => `/HavokPhysics.wasm`
         });
+        
         const havokPlugin = new BABYLON.HavokPlugin(true, havokInstance);
 
         const createScene = function () {
@@ -108,7 +110,119 @@
                         sculptureMesh.rotate(BABYLON.Axis.Y, 0.01, BABYLON.Space.LOCAL);
                     });
                     
-             
+                    
+            // Add PointsCloudSystem
+            
+            // var pcs = new BABYLON.PointsCloudSystem("pcs", 1, scene);
+            // pcs.addSurfacePoints(sculptureMesh as BABYLON.Mesh, 1000, BABYLON.PointColor.Color, 0);
+            // pcs.buildMeshAsync();
+
+    //         scene.onPointerObservable.add((pointerInfo) => {
+    //     switch (pointerInfo.type) {
+    //         case BABYLON.PointerEventTypes.POINTERDOWN:
+    //             isScattering = true;
+    //             console.log("Scattering started (mouse)");
+    //             break;
+    //         case BABYLON.PointerEventTypes.POINTERUP:
+    //             isScattering = false;
+    //             console.log("Scattering stopped (mouse)");
+    //             break;
+    //     }
+    // });
+
+
+            var pcs = new BABYLON.PointsCloudSystem("pcs", 3, scene);
+            pcs.addSurfacePoints(sculptureMesh as BABYLON.Mesh, 800, BABYLON.PointColor.Color, 0);
+            
+            const particleVelocities: BABYLON.Vector3[] = [];
+            const originalPositions: BABYLON.Vector3[] = [];
+            let isResetting = false;
+            let time = 0;
+
+            // Improved noise function for natural movement
+            const noise = {
+                seed: Math.random(),
+                get: function(x: number, y: number, z: number) {
+                    return (Math.sin(x * 1.5 + this.seed) * Math.cos(y * 2.3 + this.seed) * Math.sin(z * 1.7 + this.seed) +
+                           Math.cos(x * 2.1 + this.seed) * Math.sin(y * 1.9 + this.seed) * Math.cos(z * 2.5 + this.seed)) * 0.5;
+                }
+            };
+
+            pcs.updateParticle = function(particle) {
+                const index = particle.idx;
+                time += 0.001;
+                
+                if (!originalPositions[index]) {
+                    originalPositions[index] = particle.position.clone();
+                    particleVelocities[index] = new BABYLON.Vector3(0, 0, 0);
+                }
+
+                if (isResetting) {
+                    particle.position = BABYLON.Vector3.Lerp(
+                        particle.position,
+                        originalPositions[index],
+                        0.05  // Slower reset for smoother movement
+                    );
+                } else {
+                    const distanceFromOrigin = BABYLON.Vector3.Distance(
+                        particle.position,
+                        originalPositions[index]
+                    );
+
+                    if (distanceFromOrigin > 10) {
+                        // Smooth return to boundary
+                        const direction = originalPositions[index].subtract(particle.position).normalize();
+                        particleVelocities[index].addInPlace(direction.scale(0.001));
+                    } else {
+                        // Natural flowing movement
+                        const scale = 0.3;  // Scale of the noise pattern
+                        const speed = 0.1;  // Speed of movement
+                        
+                        // Get noise values for each dimension
+                        const nx = noise.get(time + index, particle.position.y * scale, particle.position.z * scale);
+                        const ny = noise.get(particle.position.x * scale, time + index, particle.position.z * scale);
+                        const nz = noise.get(particle.position.x * scale, particle.position.y * scale, time + index);
+                        
+                        // Apply smooth force
+                        particleVelocities[index].addInPlace(new BABYLON.Vector3(
+                            nx * speed,
+                            ny * speed,
+                            nz * speed
+                        ));
+                    }
+                    
+                    // Apply velocity with damping
+                    particle.position.addInPlace(particleVelocities[index]);
+                    particleVelocities[index].scaleInPlace(0.98); // Damping factor
+                }
+                
+                return particle;
+            };
+
+            // Add click handler
+            scene.onPointerObservable.add((pointerInfo) => {
+                if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
+                    isResetting = true;
+                    console.log("Resetting positions");
+                }
+                if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
+                    isResetting = false;
+                    console.log("Resuming random movement");
+                }
+            });
+
+            pcs.buildMeshAsync().then(() => {
+                scene.registerBeforeRender(() => {
+                    pcs.setParticles();
+                });
+            });
+
+
+
+
+
+
+           
 
                 }
 
