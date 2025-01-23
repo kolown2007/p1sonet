@@ -1,6 +1,8 @@
 <script lang="ts">
     import * as BABYLON from "@babylonjs/core";
     import "@babylonjs/loaders/glTF";
+    import {SkyMaterial} from "@babylonjs/materials/sky";
+    import { HtmlMeshRenderer, HtmlMesh  } from "@babylonjs/addons/htmlMesh";
     import HavokPhysics from "@babylonjs/havok";
     import { onDestroy } from 'svelte';
 
@@ -23,12 +25,14 @@
             
             scene = await createScene(engine, havokPlugin);
             
-            engine.runRenderLoop(() => {
-                scene.render();
+            scene.executeWhenReady(() => {
+                engine.runRenderLoop(() => {
+                    scene.render();
+                });
+                isLoading = false;
             });
 
             window.addEventListener("resize", onResize);
-            isLoading = false;
         } catch (error) {
             console.error("Initialization error:", error);
             isLoading = false;
@@ -37,8 +41,18 @@
 
     // Separate scene creation function
     async function createScene(engine: BABYLON.WebGPUEngine, havokPlugin: BABYLON.HavokPlugin) {
+
+
         const scene = new BABYLON.Scene(engine);
         scene.clearColor = new BABYLON.Color4(0, 0, 0, 1);
+
+
+        //  fog settings
+        scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+        scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
+        scene.fogDensity = 0.009; // Smaller value for more gradual fog
+        scene.fogStart = 8.0;
+        scene.fogEnd = 30.0;
 
         const camera = new BABYLON.ArcRotateCamera(
             "Camera",
@@ -49,19 +63,47 @@
             scene
         );
 
-    
         camera.setTarget(BABYLON.Vector3.Zero());
         camera.attachControl(canvas, true);
 
-        camera.lowerBetaLimit = 0.1; // Prevent the camera from going below the plane
-        camera.upperBetaLimit = Math.PI / 2; // Prevent the camera from going above the plane
-        camera.lowerRadiusLimit = 5; // Prevent the camera from zooming in too close
+        // Camera constraints
+        camera.lowerBetaLimit = 0.1;
+        camera.upperBetaLimit = Math.PI / 2;
+        camera.lowerRadiusLimit = 5;
+        camera.upperRadiusLimit = 50; // Maximum zoom out distance
+        
+        // Restrict camera movement to ground area
+        const groundSize = 50; // Half of the ground width/height
+        camera.panningSensibility = 50; // Adjust panning sensitivity
+        camera.allowUpsideDown = false;
+        
+        // Add bounds check before camera movement
+        scene.registerBeforeRender(() => {
+            const maxBounds = groundSize - 5; // Keep 5 units from edge
+            if (camera.target.x > maxBounds) camera.target.x = maxBounds;
+            if (camera.target.x < -maxBounds) camera.target.x = -maxBounds;
+            if (camera.target.z > maxBounds) camera.target.z = maxBounds;
+            if (camera.target.z < -maxBounds) camera.target.z = -maxBounds;
+        });
+
+
 
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
         light.intensity = 0.2;
 
         var light2 = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(-1, -0.5, -1.0), scene);
         light2.position = new BABYLON.Vector3(3, 6, 4);
+
+            // Skybox
+
+            
+        // Update SkyMaterial configuration
+        var box = BABYLON.Mesh.CreateBox('SkyBox', 1000, scene, false, BABYLON.Mesh.BACKSIDE);
+        var skyMaterial = new SkyMaterial('sky', scene);
+        skyMaterial.inclination = -0.35;
+        skyMaterial.luminance = 0.1;
+        skyMaterial.turbidity = 10;
+        box.material = skyMaterial;
 
         // Shadows
         var shadowGenerator = new BABYLON.ShadowGenerator(1024, light2);
@@ -71,7 +113,7 @@
         // Enable physics
         scene.enablePhysics(new BABYLON.Vector3(0, -9.81, 0), havokPlugin);
 
-        var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 100, height: 100}, scene);
+        var ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 500, height: 500}, scene);
         ground.position.y = -5.0;
 
         new BABYLON.PhysicsAggregate(ground, BABYLON.PhysicsShapeType.BOX, { mass: 0 }, scene);
@@ -82,6 +124,21 @@
         sphere.position.x = -7;
 
         new BABYLON.PhysicsAggregate(sphere, BABYLON.PhysicsShapeType.SPHERE, { mass: .5, restitution:.75}, scene);
+
+        //render website
+        const htmlMeshRenderer = new HtmlMeshRenderer(scene);
+        
+        const siteUrl = 'https://tradewinds.kolown.net/';
+        const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
+    
+        const iframeSite = document.createElement('iframe');
+        iframeSite.src = siteUrl;
+        iframeSite.width = '480px';
+        iframeSite.height = '360px';
+        htmlMeshSite.setContent(iframeSite, 4, 3);
+        htmlMeshSite.position.x = 0;
+        htmlMeshSite.position.y = 0;
+         htmlMeshSite.rotation.y = Math.PI / 4;
 
         // Load jollibee.glb model from root
         BABYLON.SceneLoader.ImportMesh(
@@ -213,6 +270,7 @@
         if (engine) {
             engine.dispose();
         }
+        
     });
 
     // Initialize when canvas is ready

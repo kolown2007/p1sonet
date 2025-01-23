@@ -3,7 +3,7 @@
 </script>
 
 <svelte:head>
-  <title>P1sonet</title>
+  <title>Parallel_universe</title>
   <meta name="description" content=" ">
 </svelte:head>
 
