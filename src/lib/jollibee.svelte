@@ -126,19 +126,22 @@
         new BABYLON.PhysicsAggregate(sphere, BABYLON.PhysicsShapeType.SPHERE, { mass: .5, restitution:.75}, scene);
 
         //render website
-        const htmlMeshRenderer = new HtmlMeshRenderer(scene);
+        // new HtmlMeshRenderer(scene);
         
-        const siteUrl = 'https://tradewinds.kolown.net/';
-        const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
+        // const siteUrl = 'https://tradewinds.kolown.net/';
+        // const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
     
-        const iframeSite = document.createElement('iframe');
-        iframeSite.src = siteUrl;
-        iframeSite.width = '480px';
-        iframeSite.height = '360px';
-        htmlMeshSite.setContent(iframeSite, 4, 3);
-        htmlMeshSite.position.x = 0;
-        htmlMeshSite.position.y = 0;
-         htmlMeshSite.rotation.y = Math.PI / 4;
+        // const iframeSite = document.createElement('iframe');
+        // iframeSite.src = siteUrl;
+        // iframeSite.width = '480px';
+        // iframeSite.height = '360px';
+
+        // htmlMeshSite.setContent(iframeSite, 4, 3);
+        // htmlMeshSite.position.x = 0;
+        // htmlMeshSite.position.y = 0;
+        //  htmlMeshSite.rotation.y = Math.PI / 4;
+
+        
 
         // Load jollibee.glb model from root
         BABYLON.SceneLoader.ImportMesh(
