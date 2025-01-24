@@ -90,9 +90,10 @@
 
 
         const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
-        light.intensity = 0.2;
+        light.intensity = 0.5;
 
-        var light2 = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(-1, -0.5, -1.0), scene);
+        var light2 = new BABYLON.DirectionalLight("dir01", new BABYLON.Vector3(-0.5, -0.2, -0.5), scene);
+        light2.intensity = 0.2;
         light2.position = new BABYLON.Vector3(3, 6, 4);
 
             // Skybox
@@ -123,74 +124,56 @@
         const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", { diameter: .5, segments: 32 }, scene);
         sphere.position.y = 10;
         sphere.position.x = -7;
+        sphere.position.y = -4.25; // Just above ground level (ground is at -5)
+        new BABYLON.PhysicsAggregate(sphere, BABYLON.PhysicsShapeType.SPHERE, { mass: .5, restitution:.75,friction: 0.5}, scene);
+        
+    // Create multiple spheres in a loop
+
+
+
+    // Add pointer click handler for shooting balls
+    scene.onPointerDown = (evt) => {
+        // Create a ball at a fixed position
+        const ball = BABYLON.MeshBuilder.CreateSphere("shootingBall", { diameter: 0.5 }, scene);
+        ball.position = camera.position.clone(); // Start from camera position
+
+        // Get picking ray from camera to pointer position
+        const ray = scene.createPickingRay(
+            scene.pointerX,
+            scene.pointerY,
+            BABYLON.Matrix.Identity(),
+            camera
+        );
+
+        // Calculate direction from ball position to ray direction
+        const direction = ray.direction.normalize();
+        
+        // Create physics for the ball with high initial velocity
+        const ballPhysics = new BABYLON.PhysicsAggregate(
+            ball, 
+            BABYLON.PhysicsShapeType.SPHERE, 
+            { mass: .9, restitution: .5, friction: 1 }, 
+            scene
+        );
+
+        // Apply impulse in the calculated direction
+        ballPhysics.body.applyImpulse(
+            direction.scale(50), // Adjust 20 to change shot power
+            ball.getAbsolutePosition()
+        );
+
+        // Add to shadow casters
+        shadowGenerator.addShadowCaster(ball);
+    };
+
+
 
 
         const sphere2 = BABYLON.MeshBuilder.CreateSphere("sphere2", { diameter: 30, segments: 32 }, scene);
         sphere2.position.y = 30;
         sphere2.position.x = 150;
 
-        new BABYLON.PhysicsAggregate(sphere, BABYLON.PhysicsShapeType.SPHERE, { mass: .5, restitution:.75}, scene);
-
-        //render website
-       // new HtmlMeshRenderer(scene);
-        
-        // const siteUrl = 'https:/tradewinds.kolown.net/';
-        // const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
-    
-        // const iframeSite = document.createElement('iframe');
-        // iframeSite.src = siteUrl;
-        // iframeSite.width = '480px';
-        // iframeSite.height = '360px';
-
-        // htmlMeshSite.setContent(iframeSite, 4, 3);
-        // htmlMeshSite.position.x = 5;
-        // htmlMeshSite.position.y = 0;
-        //  htmlMeshSite.rotation.y = Math.PI / 4;
-
-        
-htmlRenderer = new HtmlMeshRenderer(scene);
-
-// Create website container
-const websiteContainer = document.createElement('div');
-
-
-// Create and configure iframe
-const websiteFrame = document.createElement('iframe');
-websiteFrame.src = 'https://kolown.com/';
-websiteFrame.style.cssText = `
-    width: 100%;
-    height: 100%;
-    border: none;
-`;
-
-websiteFrame.onload = () => {
-    console.log('iframe loaded successfully:', websiteFrame.src);
-    try {
-        const iframeContent = websiteFrame.contentWindow;
-        console.log('iframe content accessible:', !!iframeContent);
-    } catch (e: unknown) {
-        const error = e as Error;
-        console.log('iframe content access error:', error.message);
-    }
-};
-
-websiteFrame.onerror = (error) => {
-    console.error('iframe loading failed:', error);
-};
-
-websiteFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms');
-websiteFrame.setAttribute('loading', 'eager');
-
-websiteContainer.appendChild(websiteFrame);
-
-// Create and position HtmlMesh
-const websiteMesh = new HtmlMesh(scene, "website-mesh");
-websiteMesh.setContent(websiteContainer, 4, 3);
-websiteMesh.position = new BABYLON.Vector3(0, 2, -5);
-websiteMesh.rotation.y = Math.PI / 4;
-
-// Optional: Make website always face camera
-// websiteMesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+     
 
         
 
@@ -207,14 +190,17 @@ websiteMesh.rotation.y = Math.PI / 4;
                 sculptureMesh.position.x = 5; 
                 sculptureMesh.position.y = 1;
 
-                new BABYLON.PhysicsAggregate(sculptureMesh, BABYLON.PhysicsShapeType.MESH, { mass: .2, restitution:0.5}, scene);
+                new BABYLON.PhysicsAggregate(sculptureMesh, BABYLON.PhysicsShapeType.MESH, { mass: 3, restitution:0.5}, scene);
+
+
 
                 shadowGenerator.addShadowCaster(sphere);
                 shadowGenerator.addShadowCaster(sculptureMesh);
                 ground.receiveShadows = true;
 
                 scene.registerBeforeRender(() => {
-                    sculptureMesh.rotate(BABYLON.Axis.Y, 0.01, BABYLON.Space.LOCAL);
+                  
+                 
                 });
 
 
@@ -230,7 +216,7 @@ websiteMesh.rotation.y = Math.PI / 4;
                 
 
                 var pcs = new BABYLON.PointsCloudSystem("pcs", 9, scene);
-                pcs.addSurfacePoints(sculptureMesh as BABYLON.Mesh, 800, BABYLON.PointColor.Color, 0);
+                pcs.addSurfacePoints(sculptureMesh as BABYLON.Mesh, 1500, BABYLON.PointColor.Color, 0);
                 
                 const particleVelocities: BABYLON.Vector3[] = [];
                 const originalPositions: BABYLON.Vector3[] = [];
@@ -267,13 +253,13 @@ websiteMesh.rotation.y = Math.PI / 4;
                             originalPositions[index]
                         );
 
-                        if (distanceFromOrigin > 10) {
+                        if (distanceFromOrigin > 1000) {
                             // Smooth return to boundary
                             const direction = originalPositions[index].subtract(particle.position).normalize();
-                            particleVelocities[index].addInPlace(direction.scale(0.001));
+                            particleVelocities[index].addInPlace(direction.scale(0.1));
                         } else {
                             // Natural flowing movement
-                            const scale = 0.3;  // Scale of the noise pattern
+                            const scale = 0.5;  // Scale of the noise pattern
                             const speed = 0.1;  // Speed of movement
                             
                             // Get noise values for each dimension
@@ -302,11 +288,14 @@ websiteMesh.rotation.y = Math.PI / 4;
                     if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN) {
                         isResetting = true;
                         console.log("Resetting positions");
+                   
                     }
                     if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERUP) {
                         isResetting = false;
                         console.log("Resuming random movement");
                         console.log(`Camera position - x: ${camera.position.x}, y: ${camera.position.y}, z: ${camera.position.z}`);
+
+                        
                     }
                 });
 
@@ -332,12 +321,12 @@ websiteMesh.rotation.y = Math.PI / 4;
                 bigSculptureMesh.position.z = -30;
 
                 new BABYLON.PhysicsAggregate(bigSculptureMesh, BABYLON.PhysicsShapeType.MESH, { mass: 0, restitution:0.5}, scene);
-                // shadowGenerator.addShadowCaster(bigSculptureMesh);
+                 shadowGenerator.addShadowCaster(bigSculptureMesh);
 
-                scene.registerBeforeRender(() => {
-                    // bigSculptureMesh.rotate(BABYLON.Axis.Y, -0.005, BABYLON.Space.LOCAL);
-                });
+             
             }
+
+            
         );
 
         return scene;
@@ -358,9 +347,9 @@ websiteMesh.rotation.y = Math.PI / 4;
         if (engine) {
             engine.dispose();
         }
-        if (htmlRenderer) {
-        htmlRenderer.dispose();
-    }
+    //     if (htmlRenderer) {
+    //     htmlRenderer.dispose();
+    // }
         
     });
 
