@@ -10,6 +10,7 @@
     let engine: BABYLON.WebGPUEngine;
     let scene: BABYLON.Scene;
     let isLoading = true;
+    let htmlRenderer: HtmlMeshRenderer;
 
     // Initialize Havok and Engine
     async function initializeEngine() {
@@ -50,9 +51,9 @@
         //  fog settings
         scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
         scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
-        scene.fogDensity = 0.009; // Smaller value for more gradual fog
-        scene.fogStart = 8.0;
-        scene.fogEnd = 30.0;
+        scene.fogDensity = 0.007; // Smaller value for more gradual fog
+        scene.fogStart = 10.0;
+        scene.fogEnd = 100.0;
 
         const camera = new BABYLON.ArcRotateCamera(
             "Camera",
@@ -123,12 +124,17 @@
         sphere.position.y = 10;
         sphere.position.x = -7;
 
+
+        const sphere2 = BABYLON.MeshBuilder.CreateSphere("sphere2", { diameter: 30, segments: 32 }, scene);
+        sphere2.position.y = 30;
+        sphere2.position.x = 150;
+
         new BABYLON.PhysicsAggregate(sphere, BABYLON.PhysicsShapeType.SPHERE, { mass: .5, restitution:.75}, scene);
 
         //render website
-        // new HtmlMeshRenderer(scene);
+       // new HtmlMeshRenderer(scene);
         
-        // const siteUrl = 'https://tradewinds.kolown.net/';
+        // const siteUrl = 'https:/tradewinds.kolown.net/';
         // const htmlMeshSite = new HtmlMesh(scene, "html-mesh-site");
     
         // const iframeSite = document.createElement('iframe');
@@ -137,9 +143,54 @@
         // iframeSite.height = '360px';
 
         // htmlMeshSite.setContent(iframeSite, 4, 3);
-        // htmlMeshSite.position.x = 0;
+        // htmlMeshSite.position.x = 5;
         // htmlMeshSite.position.y = 0;
         //  htmlMeshSite.rotation.y = Math.PI / 4;
+
+        
+htmlRenderer = new HtmlMeshRenderer(scene);
+
+// Create website container
+const websiteContainer = document.createElement('div');
+
+
+// Create and configure iframe
+const websiteFrame = document.createElement('iframe');
+websiteFrame.src = 'https://kolown.com/';
+websiteFrame.style.cssText = `
+    width: 100%;
+    height: 100%;
+    border: none;
+`;
+
+websiteFrame.onload = () => {
+    console.log('iframe loaded successfully:', websiteFrame.src);
+    try {
+        const iframeContent = websiteFrame.contentWindow;
+        console.log('iframe content accessible:', !!iframeContent);
+    } catch (e: unknown) {
+        const error = e as Error;
+        console.log('iframe content access error:', error.message);
+    }
+};
+
+websiteFrame.onerror = (error) => {
+    console.error('iframe loading failed:', error);
+};
+
+websiteFrame.setAttribute('sandbox', 'allow-same-origin allow-scripts allow-forms');
+websiteFrame.setAttribute('loading', 'eager');
+
+websiteContainer.appendChild(websiteFrame);
+
+// Create and position HtmlMesh
+const websiteMesh = new HtmlMesh(scene, "website-mesh");
+websiteMesh.setContent(websiteContainer, 4, 3);
+websiteMesh.position = new BABYLON.Vector3(0, 2, -5);
+websiteMesh.rotation.y = Math.PI / 4;
+
+// Optional: Make website always face camera
+// websiteMesh.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
 
         
 
@@ -165,6 +216,18 @@
                 scene.registerBeforeRender(() => {
                     sculptureMesh.rotate(BABYLON.Axis.Y, 0.01, BABYLON.Space.LOCAL);
                 });
+
+
+
+
+
+
+
+
+
+
+
+                
 
                 var pcs = new BABYLON.PointsCloudSystem("pcs", 9, scene);
                 pcs.addSurfacePoints(sculptureMesh as BABYLON.Mesh, 800, BABYLON.PointColor.Color, 0);
@@ -255,6 +318,28 @@
             }
         );
 
+        // Add second larger jollibee model
+        BABYLON.SceneLoader.ImportMesh(
+            "",
+            "https://kolown.net/assets/p1sonet/",
+            "jollibee.glb",
+            scene,
+            (meshes) => {
+                const bigSculptureMesh = meshes[1];
+                bigSculptureMesh.scaling = new BABYLON.Vector3(100, 100, 100);
+                bigSculptureMesh.position.x = 100;
+                bigSculptureMesh.position.y = -35;
+                bigSculptureMesh.position.z = -30;
+
+                new BABYLON.PhysicsAggregate(bigSculptureMesh, BABYLON.PhysicsShapeType.MESH, { mass: 0, restitution:0.5}, scene);
+                // shadowGenerator.addShadowCaster(bigSculptureMesh);
+
+                scene.registerBeforeRender(() => {
+                    // bigSculptureMesh.rotate(BABYLON.Axis.Y, -0.005, BABYLON.Space.LOCAL);
+                });
+            }
+        );
+
         return scene;
     }
 
@@ -273,6 +358,9 @@
         if (engine) {
             engine.dispose();
         }
+        if (htmlRenderer) {
+        htmlRenderer.dispose();
+    }
         
     });
 
