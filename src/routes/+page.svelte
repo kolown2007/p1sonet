@@ -1,5 +1,5 @@
 <script lang="ts">
-    import JOLLIBEE from "$lib/jollibee.svelte";
+    import JOLLIBEE from "$lib/main.svelte";
 </script>
 
 <svelte:head>
