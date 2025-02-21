@@ -19,7 +19,7 @@ export class World {
         this.setupFog();
         // Initialize shadow generator with a default light
         const shadowLight = new BABYLON.DirectionalLight("shadowLight", new BABYLON.Vector3(-1, -2, -1), this.scene);
-        shadowLight.intensity = 0.01;
+        shadowLight.intensity = 0.3;
         this.shadowGenerator = new BABYLON.ShadowGenerator(2048, shadowLight);
         this.shadowGenerator.useBlurExponentialShadowMap = true;
         this.shadowGenerator.blurKernel = 32;
@@ -61,7 +61,8 @@ export class World {
     private setupFog(): void {
         this.scene.fogMode = this.fogMode;
         this.scene.fogColor = new BABYLON.Color3(0.9, 0.9, 0.85);
-        this.scene.fogDensity = 0.01;
+        this.scene.fogDensity = 0.005;
+        this.scene.fogStart = 20.0;
         
         // Adjust skybox and ground materials for fog
         this.skyMaterial.fogEnabled = true;

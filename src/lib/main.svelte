@@ -11,8 +11,6 @@ import { BallShooter } from './parallel/shooter';
 import { Inspector } from '@babylonjs/inspector';
 
 
-
-
 let canvas: HTMLCanvasElement;
 let babylonEngine: BabylonEngine;
 let sceneCamera: SceneCamera;
@@ -68,11 +66,9 @@ async function initializeEngine() {
             }
         });
 
-       
-     
-        
-        // Create multiple Jollibee instances at random positions
-        for (let i = 0; i < 25; i++) {
+         
+        // // Create multiple Jollibee instances at random positions
+        for (let i = 0; i < 100; i++) {
             const randomX = Math.random() * 20 - 10; // Range: -10 to 10
             const randomY = Math.random() * 10 + 5;  // Range: 5 to 15
             const randomZ = Math.random() * 20 - 10; // Range: -10 to 10
@@ -94,6 +90,39 @@ async function initializeEngine() {
                 world.addShadowCaster(jollibee);
             }
         }
+
+
+
+
+
+        // Create multiple Jollibee instances at random positions
+
+        for (let i = 0; i < 20; i++) {
+            const randomX = Math.random() * 20 - 10; // Range: -10 to 10
+            const randomY = Math.random() * 10 + 5;  // Range: 5 to 15
+            const randomZ = Math.random() * 20 - 30; // Range: -10 to 10
+       
+            const jollibee = assetManager.createAsset({
+                type: AssetType.JOLLIBEE,
+                position: new Vector3(70, randomX, randomZ),
+                scale: new Vector3(50, 50, 50),
+                physics: {
+                    shape: PhysicsShapeType.CONVEX_HULL,  // Changed to CONVEX_HULL
+                    mass: 30, //Changed to 0 to make it static
+                    restitution: 0.4,  // Adjusted for better bounce
+                    friction: 0.8  // Increased friction
+                }
+            });
+
+            // Add created jollibee to shadow generator
+            if (jollibee) {
+                world.addShadowCaster(jollibee);
+            }
+        
+        }
+
+
+        
        
         
        
