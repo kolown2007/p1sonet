@@ -18,7 +18,7 @@ export class SceneCamera {
             Math.PI / 2,
             Math.PI / 2,
             2,
-            new BABYLON.Vector3(-24, 2, 12),
+            new BABYLON.Vector3(24, 2, 12),
             this.scene
         );
 
