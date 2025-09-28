@@ -13,6 +13,7 @@
 		"@sveltejs/adapter-auto": "^6.0.0",
 		"@sveltejs/kit": "^2.20.3",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",
+		"@types/d3": "^7.4.3",
 		"svelte": "^5.25.6",
 		"svelte-check": "^4.0.0",
 		"typescript": "^5.8.2",
@@ -20,7 +21,9 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@babylonjs/core": "^8.29.0",
+		"ably": "^2.13.0",
+		"d3": "^7.9.0",
 		"phaser": "^3.85.1"
-	
 	}
 }

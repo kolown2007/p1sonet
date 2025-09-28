@@ -1,0 +1,113 @@
+/* Radar-specific styles */
+:root {
+  --radar-green: #00FF00;
+  --radar-bg: #000000;
+  --radar-grid: #003300;
+  --radar-glow: 0 0 10px #00FF00;
+}
+
+html, body {
+  margin: 5px;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* Hide scrollbar */
+}
+
+.level1 {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--radar-bg); /* Full-page black background */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto; /* Allow scrolling within the container */
+  -ms-overflow-style: none; /* Hide scrollbar in Internet Explorer */
+  scrollbar-width: none; /* Hide scrollbar in Firefox */
+}
+
+.level1::-webkit-scrollbar {
+  display: none; /* Hide scrollbar in WebKit browsers */
+}
+
+.level2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 20px; /* Optional: spacing between grid cells */
+  width: calc(100% - 40px); /* Adjust width to account for margin */
+  height: calc(100% - 40px); /* Adjust height to account for margin */
+  margin: 20px; /* Adds margin from the edges */
+  color: var(--radar-green);
+  aspect-ratio: 1; /* Maintain square aspect ratio */
+}
+
+.level3 {
+  position: relative; /* Ensure child elements are positioned relative to the cell */
+  border: 1px solid rgba(0, 255, 0, 0.5); /* Example styling */
+  border-radius: 15px; /* Optional: Add rounded corners */
+  display: flex;
+  align-items: flex-start; /* Align items to the top */
+  justify-content: flex-start; /* Align items to the left */
+  padding: 10px; /* Optional: Add padding inside the cell */
+  max-width: 100%; /* Prevent the div from exceeding the page width */
+  max-height: 100%; /* Prevent the div from exceeding the page height */
+  box-sizing: border-box; /* Include padding and border in the element's total size */
+  gap: 10px; /* Add spacing between level3 divs */
+}
+
+.level4 {
+  position: relative; /* Ensure child elements are positioned relative to the cell */
+  
+  border-radius: 15px; /* Optional: Add rounded corners */
+  display: flex;
+  align-items: flex-start; /* Align items to the top */
+  justify-content: flex-start; /* Align items to the left */
+  padding: 10px; /* Optional: Add padding inside the cell */
+  max-width: 100%; /* Prevent the div from exceeding the page width */
+  max-height: 100%; /* Prevent the div from exceeding the page height */
+  box-sizing: border-box; /* Include padding and border in the element's total size */
+  gap: 10px; /* Add spacing between level3 divs */
+}
+
+@media (max-width: 600px) {
+  .radar-grid {
+    grid-template-columns: 1fr; /* Single column for smaller screens */
+    grid-template-rows: repeat(4, 1fr); /* Four rows */
+    height: calc(100vh - 40px);
+  }
+}
+
+.space-mono-regular {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.space-mono-bold {
+  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.space-mono-regular-italic {
+  font-family: "Space Mono", monospace;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.space-mono-bold-italic {
+  font-family: "Space Mono", monospace;
+  font-weight: 700;
+  font-style: italic;
+}
+
+.title {
+  position: relative; /* Position relative to the parent div */
+  top: 0;
+  left: 0;
+  margin: 2px; /* Optional: Adjust margin */
+  padding: 5px; /* Optional: Add some padding */
+}
