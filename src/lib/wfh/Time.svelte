@@ -23,7 +23,7 @@
 <style>
   .clock {
     font-family: 'Space Mono', monospace;
-    font-size: 2rem;
+    font-size: 10rem;
     color: #00FF00;
     text-align: center;
     display: flex; /* Ensures the numbers are always horizontal */

@@ -3,6 +3,7 @@
   import Time from './Time.svelte';
   import Pulsar from './Pulsar.svelte';
   import Horizon from './Horizon.svelte';
+  import Wavy from './Wavy.svelte';
   // Your component logic here
 </script>
 
@@ -13,18 +14,27 @@
 <div class="level1 space-mono-regular">
     
         <div class="level2">
-            <div class="level3" id="cell-1">
-            <!-- <h3 class ="title"> Data1</h3>  -->
            
-          
+           
              <div class ="level3">
                 <Time />
             </div>
-            </div>
+            
 
             <div class="level3" id="cell-2">
                 <Horizon />
             </div>
+
+   <div class="level3" id="cell-3">
+                <Pulsar />
+            </div>
+
+
+             <div class="level3" id="cell-3">
+                <Wavy />
+            </div>
+
+           
 
         </div>
 
