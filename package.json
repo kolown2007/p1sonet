@@ -21,9 +21,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"@babylonjs/core": "^8.29.0",
-		"ably": "^2.13.0",
-		"d3": "^7.9.0",
-		"phaser": "^3.85.1"
+		"phaser": "^3.85.1",
+		"pixi.js": "^8.15.0"
 	}
 }
