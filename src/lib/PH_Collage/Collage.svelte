@@ -2,14 +2,6 @@
   import { onMount } from 'svelte';
   import { Application, Assets, Sprite } from 'pixi.js';
 
-  // Array of texture URLs
-  const textureUrls = [
-    'https://kolown.net/storage/library/chronoescape/tribal.png',
-      'https://kolown.net/storage/library/chronoescape/metal.jpg',
-   
-    // Add more texture URLs here
-  ];
-
   onMount(() => {
     let app: Application | undefined;
     let interval: number | undefined;
@@ -23,6 +15,11 @@
 
       // Append the application canvas to the document body
       document.body.appendChild(app.canvas);
+
+      // Fetch texture URLs from API
+      const response = await fetch('https://kolown.net/api/ph_collagian');
+      const data = await response.json();
+      const textureUrls = data.images;
 
       // Load all textures
       const textures = await Assets.load(textureUrls);
@@ -41,7 +38,7 @@
         sprite.y = Math.random() * app!.screen.height;
 
         // Random scale (0.5 to 1.5)
-        const scale = 0.5 + Math.random();
+        const scale = 0.05 + Math.random();
         sprite.scale.set(scale);
 
         // Random rotation
