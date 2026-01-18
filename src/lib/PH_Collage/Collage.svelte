@@ -26,6 +26,15 @@
 
       // Function to add a random sprite
       function addRandomSprite() {
+        // Limit maximum sprites to prevent memory leak
+        const MAX_SPRITES = 50;
+        if (app!.stage.children.length >= MAX_SPRITES) {
+          // Remove oldest sprite
+          const oldestSprite = app!.stage.children[0];
+          app!.stage.removeChild(oldestSprite);
+          oldestSprite.destroy();
+        }
+        
         // Pick a random texture
         const randomUrl = textureUrls[Math.floor(Math.random() * textureUrls.length)];
         const texture = textures[randomUrl];

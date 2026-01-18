@@ -38,7 +38,7 @@
             });
 
             // Add event listener for device orientation
-            window.addEventListener('deviceorientation', (event) => {
+            const orientationHandler = (event: DeviceOrientationEvent) => {
             const { beta, gamma } = event; // beta is front-back tilt in degrees, gamma is left-right tilt in degrees
 
             // Apply force to the sprite based on the tilt
@@ -48,7 +48,11 @@
             if (imageicon.body) {
               this.matter.body.applyForce(imageicon.body as BodyType, { x: imageicon.body.position.x, y: imageicon.body.position.y }, { x: forceX, y: forceY });
             }
-            });
+            };
+            window.addEventListener('deviceorientation', orientationHandler);
+            
+            // Store handler for cleanup
+            this.registry.set('orientationHandler', orientationHandler);
 
        imageicon.setScale(0.4);
 
@@ -82,10 +86,14 @@
 
     return () => {
       if (game) {
+        const scene = game.scene.scenes[0];
+        const orientationHandler = scene?.registry.get('orientationHandler');
+        if (orientationHandler) {
+          window.removeEventListener('deviceorientation', orientationHandler);
+        }
         game.destroy(true);
       }
       window.removeEventListener('resize', resizeHandler);
-      window.removeEventListener('deviceorientation', () => {});
     };
   });
 </script>

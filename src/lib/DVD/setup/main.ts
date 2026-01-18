@@ -17,9 +17,14 @@ const config: Phaser.Types.Core.GameConfig = {
 const StartGame = (parent: string) => {
     const game = new Game({ ...config, parent });
 
-    window.addEventListener('resize', () => {
+    const resizeHandler = () => {
         game.scale.resize(window.innerWidth, window.innerHeight);
-    });
+    };
+    
+    window.addEventListener('resize', resizeHandler);
+    
+    // Store handler on game for cleanup
+    (game as any)._resizeHandler = resizeHandler;
 
     return game;
 }

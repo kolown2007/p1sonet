@@ -30,7 +30,7 @@
 
         phaserRef.game = StartGame("game-container");
 
-        EventBus.on('current-scene-ready', (scene_instance: Scene) => {
+        const sceneReadyHandler = (scene_instance: Scene) => {
 
             phaserRef.scene = scene_instance;
 
@@ -41,7 +41,20 @@
                 
             }
 
-        });
+        };
+        
+        EventBus.on('current-scene-ready', sceneReadyHandler);
+        
+        return () => {
+            EventBus.off('current-scene-ready', sceneReadyHandler);
+            if (phaserRef.game) {
+                const resizeHandler = (phaserRef.game as any)._resizeHandler;
+                if (resizeHandler) {
+                    window.removeEventListener('resize', resizeHandler);
+                }
+                phaserRef.game.destroy(true);
+            }
+        };
 
     });
 
