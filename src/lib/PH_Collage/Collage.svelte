@@ -11,7 +11,7 @@
       app = new Application();
 
       // Initialize the application
-      await app.init({ background: '#f0f0f0', resizeTo: window });
+      await app.init({ background: '#000000', resizeTo: window });
 
       // Append the application canvas to the document body
       document.body.appendChild(app.canvas);
@@ -46,9 +46,10 @@
         sprite.x = Math.random() * app!.screen.width;
         sprite.y = Math.random() * app!.screen.height;
 
-        // Random scale (0.5 to 1.5)
-        const scale = 0.05 + Math.random();
+        const MIN_SCALE = 0.5;
+        const scale = MIN_SCALE + Math.random() * (1 - MIN_SCALE);
         sprite.scale.set(scale);
+
 
         // Random rotation
         sprite.rotation = Math.random() * Math.PI * 2;
