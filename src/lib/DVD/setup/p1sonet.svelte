@@ -22,7 +22,8 @@
       scene: {
 
         preload: function () {
-          this.load.image('img', 'https://kolown.net/assets/p1sonet/image.png');
+          //this.load.image('img', 'https://kolown.net/assets/p1sonet/image.png');
+              this.load.image('img', '/dvd.png');
         },
 
         create: function () {

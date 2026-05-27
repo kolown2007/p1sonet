@@ -1,4 +1,5 @@
 <script lang="ts">
+	import '../app.css';
 	import { onMount } from 'svelte';
 	let { children } = $props();
 
@@ -34,11 +35,3 @@
 </script>
 
 {@render children()}
-
-<style>
-	:global(html, body) {
-		height: 100%;
-		margin: 0;
-		overflow: hidden;
-	}
-</style>
