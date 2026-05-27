@@ -27,6 +27,8 @@ export interface GesturePreprocessOptions {
 export interface RecognizeGestureOptions extends GesturePreprocessOptions {
 	// Maximum warp distance in indices. Lower is stricter and faster.
 	window?: number;
+	// Number of most recent frames used for gesture matching.
+	recentFrames?: number;
 	// If set, returns null label when best score is above threshold.
 	threshold?: number;
 	// Minimum recent signal energy required to run recognition.
@@ -36,6 +38,8 @@ export interface RecognizeGestureOptions extends GesturePreprocessOptions {
 	motionWindow?: number;
 	// Require this many frames before recognition is attempted.
 	minFrames?: number;
+	// Minimum start-to-end directional delta before applying direction hint.
+	directionDeltaThreshold?: number;
 	// Optional custom templates. If omitted, built-in up/down/left/right templates are used.
 	templates?: GestureTemplate[];
 }
@@ -134,6 +138,55 @@ const computeMotionEnergy = (
 	return count > 0 ? sum / count : 0;
 };
 
+const averageRange = (
+	frames: AccelerometerFrame[],
+	start: number,
+	end: number
+): AccelerometerFrame => {
+	let sx = 0;
+	let sy = 0;
+	let sz = 0;
+	let count = 0;
+
+	for (let i = start; i < end; i += 1) {
+		sx += frames[i].x;
+		sy += frames[i].y;
+		sz += frames[i].z;
+		count += 1;
+	}
+
+	if (count === 0) {
+		return { x: 0, y: 0, z: 0 };
+	}
+
+	return { x: sx / count, y: sy / count, z: sz / count };
+};
+
+const inferDirectionalHint = (
+	frames: AccelerometerFrame[],
+	directionDeltaThreshold: number
+): CardinalGesture | null => {
+	if (frames.length < 4) {
+		return null;
+	}
+
+	const edgeSize = Math.max(2, Math.floor(frames.length * 0.2));
+	const first = averageRange(frames, 0, edgeSize);
+	const last = averageRange(frames, frames.length - edgeSize, frames.length);
+	const dx = last.x - first.x;
+	const dy = last.y - first.y;
+
+	if (Math.max(Math.abs(dx), Math.abs(dy)) < directionDeltaThreshold) {
+		return null;
+	}
+
+	if (Math.abs(dx) >= Math.abs(dy)) {
+		return dx >= 0 ? 'right' : 'left';
+	}
+
+	return dy >= 0 ? 'up' : 'down';
+};
+
 export const preprocessAccelerometerFrames = (
 	frames: AccelerometerFrame[],
 	options: GesturePreprocessOptions = {}
@@ -213,9 +266,12 @@ export const recognizeCardinalGesture = (
 		};
 	}
 
+	const recentFrames = options.recentFrames ?? 48;
+	const activeFrames = frames.slice(-Math.max(minFrames, recentFrames));
+
 	const includeZ = options.includeZ ?? false;
 	const motionWindow = options.motionWindow ?? 10;
-	const motionEnergy = computeMotionEnergy(frames, Math.max(1, motionWindow), includeZ);
+	const motionEnergy = computeMotionEnergy(activeFrames, Math.max(1, motionWindow), includeZ);
 	const motionThreshold = options.motionThreshold ?? 0.03;
 
 	if (motionEnergy < motionThreshold) {
@@ -228,8 +284,13 @@ export const recognizeCardinalGesture = (
 	}
 
 	const templates = options.templates ?? createCardinalGestureTemplates();
-	const candidate = accelerometerToDtwSamples(frames, options);
+	const processedFrames = preprocessAccelerometerFrames(activeFrames, options);
+	const candidate: Sample[] = processedFrames.map((f) =>
+		includeZ ? [f.x, f.y, f.z] : [f.x, f.y]
+	);
 	const window = options.window;
+	const directionDeltaThreshold = options.directionDeltaThreshold ?? 0.25;
+	const directionHint = inferDirectionalHint(processedFrames, directionDeltaThreshold);
 
 	const scores: GestureScore[] = templates.map((template) => {
 		const templateSamples = accelerometerToDtwSamples(template.frames, options);
@@ -237,9 +298,11 @@ export const recognizeCardinalGesture = (
 			window,
 			normalize: true
 		});
+
+		const hintBonus = directionHint === template.label ? 0.08 : 0;
 		return {
 			label: template.label,
-			score: result.normalizedCost
+			score: Math.max(0, result.normalizedCost - hintBonus)
 		};
 	});
 

@@ -23,7 +23,31 @@
 	let activeGesture: GestureDisplay = 'waiting';
 	let debugScore = 'inf';
 	let status = 'Tap start to enable accelerometer recognition.';
+	let isLandscape = false;
 	let lastClassifyAt = 0;
+
+	const updateOrientationState = (): void => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+		isLandscape = window.innerWidth > window.innerHeight;
+	};
+
+	const tryLockPortrait = async (): Promise<void> => {
+		if (typeof screen === 'undefined' || !screen.orientation) {
+			return;
+		}
+
+		if (typeof screen.orientation.lock !== 'function') {
+			return;
+		}
+
+		try {
+			await screen.orientation.lock('portrait-primary');
+		} catch {
+			status = 'Tracking started. Rotate to portrait if lock is not supported on this browser.';
+		}
+	};
 
 	const positionClass = (gesture: GestureDisplay): string => {
 		if (gesture === 'left') return 'pos-left';
@@ -37,7 +61,12 @@
 	$: textPosition = positionClass(activeGesture);
 
 	const onMotion = (event: DeviceMotionEvent): void => {
-		const acc = event.accelerationIncludingGravity;
+		const linear = event.acceleration;
+		const gravity = event.accelerationIncludingGravity;
+		const hasLinear =
+			linear !== null &&
+			(linear.x !== null || linear.y !== null || linear.z !== null);
+		const acc = hasLinear ? linear : gravity;
 		if (!acc) {
 			return;
 		}
@@ -67,6 +96,8 @@
 			return;
 		}
 
+		await tryLockPortrait();
+
 		const maybeRequestable = DeviceMotionEvent as typeof DeviceMotionEvent & {
 			requestPermission?: () => Promise<'granted' | 'denied'>;
 		};
@@ -91,15 +122,25 @@
 	};
 
 	onMount(() => {
+		updateOrientationState();
+		window.addEventListener('resize', updateOrientationState);
+		window.addEventListener('orientationchange', updateOrientationState);
+
 		return () => {
 			if (typeof window !== 'undefined') {
 				window.removeEventListener('devicemotion', onMotion);
+				window.removeEventListener('resize', updateOrientationState);
+				window.removeEventListener('orientationchange', updateOrientationState);
 			}
 		};
 	});
 </script>
 
 <main class="stage">
+	{#if isLandscape}
+		<div class="orientation-overlay">rotate to portrait</div>
+	{/if}
+
 	<div class="hud">
 		<button on:click={startTracking} disabled={permission === 'granted'}>
 			{permission === 'granted' ? 'tracking' : 'start'}
@@ -161,6 +202,19 @@
 			top 180ms ease,
 			transform 180ms ease;
 		user-select: none;
+	}
+
+	.orientation-overlay {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		font-size: clamp(1.2rem, 4vw, 2rem);
+		background: rgba(0, 0, 0, 0.7);
+		z-index: 3;
 	}
 
 	.pos-center {
