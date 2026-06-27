@@ -1,0 +1,47 @@
+
+[
+    {
+ "type": "videoScene",
+  "id": "video-2",
+  "src": "https://kolown.net/storage/library/chronoescape/videos/fortnite.mp4",
+  "loop": true,
+  "muted": true
+},
+
+{
+ "type": "videoScene",
+  "id": "video-3",
+  "src": "https://kolown.net/storage/library/chronoescape/videos/chrono2glitch.mp4",
+  "loop": true,
+  "muted": true
+},
+
+{
+ "type": "videoScene",
+  "id": "video-4",
+  "src": "https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4",
+  "loop": true,
+  "muted": true
+},
+
+{
+ "type": "videoScene",
+  "id": "video-5",
+  "src": "https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4",
+  "loop": true,
+  "muted": true
+},
+
+{
+ "type": "GifScene",
+  "id": "gif-1",
+  "src": "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3Uxbmdhejdtb3JwazV3MXV1MHFxMjhxbHZnZGx5d3UwYmx2bm55aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/B6SyssSlTgPXq/giphy.gif",
+  "objectFit": "cover"
+}
+
+]
+
+
+
+
+ 

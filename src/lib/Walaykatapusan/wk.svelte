@@ -1,153 +1,112 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { SceneDirector, VideoScene, YoutubeScene, GifScene } from '$lib/Walaykatapusan/scenemanager';
-
+    import content from '$lib/Walaykatapusan/content.json';
+    
     let container: HTMLDivElement | null = null;
 
+    interface BaseScene {
+        type: 'videoScene' | 'GifScene';
+        id: string;
+        src: string;
+        objectFit?: "cover" | "none" | "contain" | "fill" | "scale-down";
+        loop?: boolean;
+        muted?: boolean;
+    }
+
+    const preloadAssets = (scenes: BaseScene[]): Promise<void[]> => {
+        const promises: Promise<void>[] = scenes
+            .filter((scene): scene is BaseScene & { type: 'videoScene' } => scene.type === 'videoScene')
+            .map(scene => {
+                return new Promise<void>((resolve) => {
+                    const video = document.createElement('video');
+                    video.src = scene.src;
+                    video.preload = 'auto';
+                    
+                    const onReady = () => {
+                        video.removeEventListener('canplaythrough', onReady);
+                        video.removeEventListener('error', onReady);
+                        resolve();
+                    };
+
+                    video.addEventListener('canplaythrough', onReady);
+                    video.addEventListener('error', onReady);
+                });
+            });
+            
+        return Promise.all(promises);
+    };
+
     onMount(() => {
-        if (!container) {
-            return;
-        }
+        if (!container) return;
 
-        const director = new SceneDirector({
-            container,
-            transitionDuration: 800,
-            subtitles: {
-                src: '/tracks/chrono2glitch.vtt',
-                loop: true
-            }
-        });
+        // 1. Declare variables at the top of onMount so the cleanup function can see them
+        let director: SceneDirector | undefined;
+        let rotateTimer: number | undefined;
 
-        director.register(
-            new VideoScene({
-                id: 'video-1',
-                src: 'https://kolown.net/storage/library/chronoescape/videos/chrono2glitch.mp4',
-                loop: true,
-                muted: true,
-                // tracks: [
-                //     {
-                //         kind: 'subtitles',
-                //         src: '/tracks/chrono2glitch.vtt',
-                //         srclang: 'en',
-                //         label: 'English',
-                //         default: true
-                //     }
-                // ]
-            })
-        );
+        const scenes = content as BaseScene[];
 
-        director.register(
-            new VideoScene({
-                id: 'video-2',
-                src: 'https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4',
-                loop: true,
-                muted: true
-            })
-        );
+        const initialize = async () => {
+            // Wait for videos to load
+            await preloadAssets(scenes);
 
-        director.register(
-            new VideoScene({
-                id: 'video-3',
-                src: 'https://kolown.net/storage/library/chronoescape/videos/fortnite.mp4',
-                loop: true,
-                muted: true
-            })
-        );
+            // 2. Assign to the higher-scoped variable
+            director = new SceneDirector({
+                container: container!, // The ! tells TS container is definitely not null here
+                transitionDuration: 800,
+                subtitles: {
+                    src: '/tracks/chrono2glitch2.vtt',
+                    loop: true
+                }
+            });
 
-        // director.register(
-        //     new YoutubeScene({
-        //         id: 'yt-clip',
-        //         src: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        //         loop: true,
-        //         muted: true
-        //     })
-        // );
+            // Register scenes
+            scenes.forEach((scene) => {
+                switch (scene.type) {
+                    case 'videoScene':
+                        director!.register(
+                            new VideoScene({
+                                id: scene.id,
+                                src: scene.src,
+                                loop: scene.loop,
+                                muted: scene.muted
+                            })
+                        );
+                        break;
+                    case 'GifScene':
+                        director!.register(
+                            new GifScene({
+                                id: scene.id,
+                                src: scene.src,
+                                objectFit: scene.objectFit 
+                            })
+                        );
+                        break;
+                }
+            });
 
-        director.register(
-            new GifScene({
-                id: 'gif-1',
-                src: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2Qwdzc3MHc1ZnlkODk1NHhmbTFoempwcHE5bXBqaTV6NWU1aHNsMyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Bpqp2E59wkaOY/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
+            // 3. Play and set timer AFTER initialization is fully complete
+            void director.play('video-1', 'init');
 
-            director.register(
-            new GifScene({
-                id: 'gif-2',
-                src: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExemlqdGpreHVxa213cmVncHdod3Uwb3Bodzlrb2Iwd2hmaG5mZWo4NSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/PHiLvJlnIpS6cMZqez/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
+            rotateTimer = window.setInterval(() => {
+                void director!.next('algorithm');
+            }, 8000);
+        };
 
+        // Start the process
+        initialize();
 
-
-            director.register(
-            new GifScene({
-                id: 'gif-3',
-                src: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3Uxbmdhejdtb3JwazV3MXV1MHFxMjhxbHZnZGx5d3UwYmx2bm55aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/B6SyssSlTgPXq/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
-
-               director.register(
-            new GifScene({
-                id: 'gif-4',
-                src: 'https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzU3MG13cGpiZGNtcjJrZmZucGhhZWd4OXR3YTJuY3F4YWQzMmMwOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cyDamOw9IvHKv9iWbq/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
-
-
-                director.register(
-            new GifScene({
-                id: 'wemby',
-                src: 'https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGdmeGVleHdhcDVnbGZxbGw3Y3NleGJmbWd6N2NtcTNndnhzcjB2ZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/t4S5Gt56PnyqFdSSe9/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
-
-
-                     director.register(
-            new GifScene({
-                id: 'war',
-                src: 'https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExY2IzZWV6Z3FxNTl6ZzJteGFsZDQ3YWFqdGplZXJ4MmhsejExbHZmNSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/QR7SyBe7tQfPq/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
-
-                     director.register(
-            new GifScene({
-                id: 'radar',
-                src: 'https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjdkM3hvaDcxb2RpZGptOWJkdmhlNXFpeGcwaDc2dzA2cG1wcXIxaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/FX0F3UG9VDTig/giphy.gif',
-                objectFit: 'cover'
-            })
-        );
-
-
-
-
-
-
-
-
-
-
-
-        void director.play('video-1', 'init');
-
-        const rotateTimer = window.setInterval(() => {
-            void director.next('algorithm');
-        }, 8000);
-
+        // 4. Cleanup function
         return () => {
-            window.clearInterval(rotateTimer);
-            void director.destroyAll('manual');
+            // Safely clear/destroy only if they were successfully created
+            if (rotateTimer) window.clearInterval(rotateTimer);
+            if (director) void director.destroyAll('manual');
         };
     });
 </script>
 
 <svelte:head>
-    <title>Walay Katapusan - Video Scene Sample</title>
+    <title>Walay Katapusan</title>
 </svelte:head>
 
 <main>
