@@ -4,6 +4,8 @@
     import content from '$lib/Walaykatapusan/content.json';
     
     let container: HTMLDivElement | null = null;
+    let subtitleHost: HTMLDivElement | null = null;
+    export let rotateLayout = false;
 
     interface BaseScene {
         type: 'videoScene' | 'GifScene';
@@ -52,12 +54,13 @@
 
             // 2. Assign to the higher-scoped variable
             director = new SceneDirector({
-                container: container!, // The ! tells TS container is definitely not null here
+                container: container!,
                 transitionDuration: 800,
                 subtitles: {
                     src: '/tracks/chrono2glitch2.vtt',
                     loop: true
-                }
+                },
+                ...(rotateLayout && subtitleHost ? { subtitleContainer: subtitleHost } : {})
             });
 
             // Register scenes
@@ -109,9 +112,11 @@
     <title>Walay Katapusan</title>
 </svelte:head>
 
-<main>
+<main class:rotated={rotateLayout}>
     <div bind:this={container} class="scene-root"></div>
-    <!-- <div class="status-pill">Auto cycling 3 videos</div> -->
+    {#if rotateLayout}
+        <div bind:this={subtitleHost} class="subtitle-host"></div>
+    {/if}
 </main>
 
 <style>
@@ -121,10 +126,34 @@
         background: #111;
     }
 
+    main.rotated {
+        inset: unset;
+        top: 50%;
+        left: 50%;
+        width: 100vh;
+        height: 100vw;
+        transform: translate(-50%, -50%) rotate(90deg);
+        transform-origin: center;
+    }
+
     .scene-root {
         width: 100%;
         height: 100%;
+        overflow: hidden;
+        background: #111;
     }
 
-   
+    .subtitle-host {
+        position: absolute;
+        left: 50%;
+        bottom: 4%;
+        transform: translateX(-50%);
+        width: 10rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 0.5rem;
+        z-index: 9999;
+        pointer-events: none;
+    }
 </style>

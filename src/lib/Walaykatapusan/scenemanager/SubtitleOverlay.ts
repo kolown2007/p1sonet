@@ -71,19 +71,21 @@ export class SubtitleOverlay {
 		if (options.className) el.className = options.className;
 		el.style.cssText = [
 			'position:absolute',
-			'bottom:10%',
 			'left:50%',
+			'bottom:10%',
 			'transform:translateX(-50%)',
 			'z-index:9999',
 			'pointer-events:none',
 			'text-align:center',
 			'color:#fff',
-			'font-size:clamp(18px,3.5vw,28px)',
+			'font-size:clamp(14px,2vw,22px)',
 			'font-family:sans-serif',
 			'text-shadow:0 5px 6px rgba(0,0,0,.85),0 0 2px rgba(0,0,0,.6)',
-			'max-width:80%',
+			'max-width:none',
+			'overflow:visible',
+			'white-space:nowrap',
 			'line-height:1.5',
-			'display:none'
+			'visibility:visible'
 		].join(';');
 		this.el = el;
 	}
@@ -144,21 +146,10 @@ export class SubtitleOverlay {
 	}
 
 	private setCue(cue: VttCue | null): void {
-		// Avoid unnecessary DOM writes
-		const next = cue ? cue.lines.join('\n') : '';
+		const next = cue ? cue.lines.join(' ') : '';
 		if (this.el.dataset['cue'] === next) return;
 		this.el.dataset['cue'] = next;
 
-		this.el.innerHTML = '';
-		if (!cue) return;
-
-		for (let i = 0; i < cue.lines.length; i++) {
-			const span = document.createElement('span');
-			span.textContent = cue.lines[i];
-			this.el.appendChild(span);
-			if (i < cue.lines.length - 1) {
-				this.el.appendChild(document.createElement('br'));
-			}
-		}
+		this.el.textContent = next;
 	}
 }

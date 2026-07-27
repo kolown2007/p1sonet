@@ -26,6 +26,12 @@ export interface SceneDirectorOptions {
 	 * Pass a VTT file URL and the director will load and run it automatically.
 	 */
 	subtitles?: SubtitleOverlayOptions;
+	/**
+	 * Optional alternative container for the subtitle overlay.
+	 * Useful when the main container is rotated and you want the subtitle
+	 * to be positioned relative to the viewport instead.
+	 */
+	subtitleContainer?: HTMLElement;
 }
 
 export class SceneDirector {
@@ -58,7 +64,8 @@ export class SceneDirector {
 		}
 
 		if (options.subtitles) {
-			this.subtitleOverlay = new SubtitleOverlay(this.container, options.subtitles);
+			const subtitleHost = options.subtitleContainer ?? this.container;
+			this.subtitleOverlay = new SubtitleOverlay(subtitleHost, options.subtitles);
 			void this.subtitleOverlay.load().then(() => this.subtitleOverlay!.start());
 		}
 	}
