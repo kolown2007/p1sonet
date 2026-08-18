@@ -8,9 +8,12 @@ export type SceneSelectionAlgorithm = (args: {
 	reason: SceneTransitionReason;
 }) => string | null;
 
+export type SceneSelectionMode = 'linear' | 'random';
+
 export interface SceneDirectorOptions {
 	container: HTMLElement;
 	algorithm?: SceneSelectionAlgorithm;
+	selectionMode?: SceneSelectionMode;
 	now?: () => number;
 	/**
 	 * Duration of the TikTok-style slide-up transition in milliseconds.
@@ -39,6 +42,8 @@ export class SceneDirector {
 	private readonly abortControllers = new Map<string, AbortController>();
 	private readonly backgroundIds = new Set<string>();
 	private readonly wrappers = new Map<string, HTMLDivElement>();
+	private readonly queue: string[] = [];
+	private readonly singleUseSceneIds = new Set<string>();
 	private currentId: string | null = null;
 	private readonly container: HTMLElement;
 	private readonly algorithm?: SceneSelectionAlgorithm;
@@ -49,7 +54,8 @@ export class SceneDirector {
 
 	public constructor(options: SceneDirectorOptions) {
 		this.container = options.container;
-		this.algorithm = options.algorithm;
+		this.algorithm =
+			options.algorithm ?? this.createBuiltInSelectionAlgorithm(options.selectionMode ?? 'linear');
 		this.now = options.now ?? (() => performance.now());
 		this.transitionDuration = options.transitionDuration ?? 0;
 		this.transitionEasing = options.transitionEasing ?? 'cubic-bezier(0.25, 0.46, 0.45, 0.94)';
@@ -121,6 +127,9 @@ export class SceneDirector {
 			const prevScene = this.requireScene(prevId);
 			await prevScene.runInBackground(this.buildContext(prevId, reason));
 			this.backgroundIds.add(prevId);
+			if (this.isSingleUse(prevId)) {
+				await this.destroy(prevId, reason);
+			}
 			outWrapper.style.display = 'none';
 			outWrapper.style.zIndex = '';
 			inWrapper.style.zIndex = '';
@@ -130,6 +139,9 @@ export class SceneDirector {
 				const prevScene = this.requireScene(prevId);
 				await prevScene.runInBackground(this.buildContext(prevId, reason));
 				this.backgroundIds.add(prevId);
+				if (this.isSingleUse(prevId)) {
+					await this.destroy(prevId, reason);
+				}
 				if (this.transitionDuration > 0) {
 					const outWrapper = this.wrappers.get(prevId);
 					if (outWrapper) outWrapper.style.display = 'none';
@@ -143,19 +155,39 @@ export class SceneDirector {
 		this.currentId = id;
 	}
 
+	public enqueueScene(id: string, singleUse = true): void {
+		if (!this.scenes.has(id)) {
+			throw new Error(`Cannot queue scene "${id}" because it is not registered.`);
+		}
+
+		if (!this.queue.includes(id)) {
+			this.queue.push(id);
+		}
+
+		if (singleUse) {
+			this.singleUseSceneIds.add(id);
+		}
+	}
+
 	public async next(reason: SceneTransitionReason = 'algorithm'): Promise<string | null> {
 		const ids = [...this.scenes.keys()];
 		if (ids.length === 0) {
 			return null;
 		}
 
-		const nextId =
-			this.algorithm?.({
+		let nextId: string | null = null;
+		if (this.queue.length > 0) {
+			nextId = this.queue.shift() ?? null;
+		} else {
+			const selectableIds = ids.filter((sceneId) => !this.singleUseSceneIds.has(sceneId));
+			const result = this.algorithm?.({
 				currentId: this.currentId,
-				sceneIds: ids,
+				sceneIds: selectableIds.length ? selectableIds : ids,
 				scenes: this.scenes,
 				reason
-			}) ?? this.defaultLinearSelection(ids);
+			});
+			nextId = result ?? null;
+		}
 
 		if (!nextId) {
 			return null;
@@ -194,6 +226,7 @@ export class SceneDirector {
 		}
 
 		this.scenes.delete(id);
+		this.singleUseSceneIds.delete(id);
 	}
 
 	public async destroyAll(reason: SceneTransitionReason = 'manual'): Promise<void> {
@@ -235,6 +268,10 @@ export class SceneDirector {
 		});
 	}
 
+	private isSingleUse(id: string): boolean {
+		return this.singleUseSceneIds.has(id);
+	}
+
 	private requireScene(id: string): Scene {
 		const scene = this.scenes.get(id);
 		if (!scene) {
@@ -244,17 +281,34 @@ export class SceneDirector {
 		return scene;
 	}
 
-	private defaultLinearSelection(ids: string[]): string {
-		if (!this.currentId) {
-			return ids[0];
+	private createBuiltInSelectionAlgorithm(mode: SceneSelectionMode): SceneSelectionAlgorithm {
+		if (mode === 'random') {
+			return ({ currentId, sceneIds }) => {
+				if (sceneIds.length === 0) {
+					return null;
+				}
+
+				if (sceneIds.length === 1) {
+					return sceneIds[0];
+				}
+
+				const availableIds = currentId ? sceneIds.filter((id) => id !== currentId) : sceneIds;
+				return availableIds[Math.floor(Math.random() * availableIds.length)];
+			};
 		}
 
-		const index = ids.indexOf(this.currentId);
-		if (index < 0) {
-			return ids[0];
-		}
+		return ({ currentId, sceneIds }) => {
+			if (!currentId) {
+				return sceneIds[0];
+			}
 
-		return ids[(index + 1) % ids.length];
+			const index = sceneIds.indexOf(currentId);
+			if (index < 0) {
+				return sceneIds[0];
+			}
+
+			return sceneIds[(index + 1) % sceneIds.length];
+		};
 	}
 
 	private buildContext(id: string, reason: SceneTransitionReason): SceneContext {

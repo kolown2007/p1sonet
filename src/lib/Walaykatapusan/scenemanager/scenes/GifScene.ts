@@ -3,7 +3,7 @@ import type { SceneContext } from '../types';
 
 export interface GifSceneOptions {
 	id: string;
-	/** URL to a GIF (or any image the browser can display as <img>) */
+	/** URL to an image file (GIF, PNG, JPG, etc.) that the browser can display in an <img>. */
 	src: string;
 	className?: string;
 	/** How to fit the image in the container. Defaults to 'cover'. */

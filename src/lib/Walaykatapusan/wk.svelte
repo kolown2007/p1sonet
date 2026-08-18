@@ -7,6 +7,8 @@
     let subtitleHost: HTMLDivElement | null = null;
     export let rotateLayout = false;
 
+    type FeedAlgorithm = 'linear' | 'random';
+
     interface BaseScene {
         type: 'videoScene' | 'GifScene';
         id: string;
@@ -15,6 +17,8 @@
         loop?: boolean;
         muted?: boolean;
     }
+
+    const feedAlgorithm: FeedAlgorithm = 'random';
 
     const preloadAssets = (scenes: BaseScene[]): Promise<void[]> => {
         const promises: Promise<void>[] = scenes
@@ -47,6 +51,7 @@
         let rotateTimer: number | undefined;
 
         const scenes = content as BaseScene[];
+        const selectionMode = feedAlgorithm;
 
         const initialize = async () => {
             // Wait for videos to load
@@ -56,6 +61,7 @@
             director = new SceneDirector({
                 container: container!,
                 transitionDuration: 800,
+                selectionMode,
                 subtitles: {
                     src: '/tracks/chrono2glitch2.vtt',
                     loop: true
@@ -88,8 +94,8 @@
                 }
             });
 
-            // 3. Play and set timer AFTER initialization is fully complete
-            void director.play('video-1', 'init');
+            // 3. Start playback using the selected feed algorithm
+            void director!.next('init');
 
             rotateTimer = window.setInterval(() => {
                 void director!.next('algorithm');

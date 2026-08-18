@@ -21,6 +21,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"ably": "^2.27.0",
 		"phaser": "^3.85.1",
 		"pixi.js": "^8.15.0"
 	}
