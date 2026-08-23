@@ -18,7 +18,28 @@
         muted?: boolean;
     }
 
+    interface CompactContent {
+        videos: string[];
+        gifs: string[];
+    }
+
     const feedAlgorithm: FeedAlgorithm = 'random';
+
+    const scenes: BaseScene[] = [
+        ...(content as CompactContent).videos.map((src, index) => ({
+            type: 'videoScene' as const,
+            id: `video-${index + 1}`,
+            src,
+            loop: true,
+            muted: true
+        })),
+        ...(content as CompactContent).gifs.map((src, index) => ({
+            type: 'GifScene' as const,
+            id: `gif-${index + 1}`,
+            src,
+            objectFit: 'cover' as const
+        }))
+    ];
 
     const preloadAssets = (scenes: BaseScene[]): Promise<void[]> => {
         const promises: Promise<void>[] = scenes
@@ -50,7 +71,6 @@
         let director: SceneDirector | undefined;
         let rotateTimer: number | undefined;
 
-        const scenes = content as BaseScene[];
         const selectionMode = feedAlgorithm;
 
         const initialize = async () => {

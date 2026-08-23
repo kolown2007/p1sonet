@@ -1,70 +1,35 @@
 
-[
-    {
-      "type": "videoScene",
-      "id": "video-2",
-      "src": "https://kolown.net/storage/library/chronoescape/videos/fortnite.mp4",
-      "loop": true,
-      "muted": true
-    },
-    {
-      "type": "videoScene",
-      "id": "video-3",
-      "src": "https://kolown.net/storage/library/chronoescape/videos/chrono2glitch.mp4",
-      "loop": true,
-      "muted": true
-    },
-    {
-      "type": "videoScene",
-      "id": "video-4",
-      "src": "https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4",
-      "loop": true,
-      "muted": true
-    },
-    {
-      "type": "videoScene",
-      "id": "video-5",
-      "src": "https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4",
-      "loop": true,
-      "muted": true
-    },
-    {
-      "type": "GifScene",
-      "id": "gif-1",
-      "src": "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3Uxbmdhejdtb3JwazV3MXV1MHFxMjhxbHZnZGx5d3UwYmx2bm55aSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/B6SyssSlTgPXq/giphy.gif",
-      "objectFit": "cover"
-    },
-    {
-      "type": "GifScene",
-      "id": "gif-2",
-      "src": "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnZ2czdkYmdpb3c4dXZsN3c4a2c2ejcwOXNueTA2eWttM3d0ZmNjMiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/6nJJWbxVUDxDy/giphy.gif",
-      "objectFit": "cover"
-    },
-    {
-      "type": "GifScene",
-      "id": "gif-3",
-      "src": "https://streetkonect.com/storage/kolown/souvenir/ss1.jpg",
-      "objectFit": "cover"
-    },
-    {
-      "type": "GifScene",
-      "id": "gif-4",
-      "src": "https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif",
-      "objectFit": "cover"
-    },
-    {
-      "type": "GifScene",
-      "id": "gif-5",
-      "src": "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdzejQ5Ym14enI3eGFkMWthbjYzZzZjanJoM2tjcmRkc3A2bmZqcSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ZlZoVTAswo3LSg5Al/giphy.gif",
-      "objectFit": "cover"
-    },
-    {
-      "type": "GifScene",
-      "id": "gif-6",
-      "src": "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNjg1OGMybXBxaXhwbXAwcjhvam50NmR1bHlzbTl4bDh5ZngwandsNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yFRw9wFz0Qkk8NOYIU/giphy.gif",
-      "objectFit": "cover"
-    }
-]
+{
+  "videos": [
+    "https://kolown.net/storage/library/chronoescape/videos/fortnite.mp4",
+    "https://kolown.net/storage/library/chronoescape/videos/chrono2glitch.mp4",
+    "https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4",
+    "https://kolown.net/storage/library/chronoescape/videos/cocoglitch.mp4",
+    "https://kolown.net/storage/library/walaykatapusan/1.mp4",
+    "https://kolown.net/storage/library/walaykatapusan/2.mp4",
+    "https://kolown.net/storage/library/walaykatapusan/3.mp4"
+  ],
+  "gifs": [
+    "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMnRzbW45aHh0dHFicDFqOTAydXk4ZWs1b25hMXZ6emZ1d2M5MHoyZCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/v56oyLsYeBwZ2/giphy.gif",
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExdWhxMjl3dGt6bHB0NTQ4eHZjbGJ4a2c3eTNoZzFyeWgzbTNoMXJibSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/KEM3W3PN4LNoaMSaBy/giphy.gif",
+    "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3o0b3I1ODZzZXo4aDZ5Y2hxeDB2bmJkMDRoNWJwaGlieXl5dXpzdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/nuIe85WYG7bc4/giphy.gif",
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnBqbjJtdGVyamNvMnY5M3U1cWEwZWR6Y2x2dmdxbG51Yzh3YjV2ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d31vTpVi1LAcDvdm/giphy.gif",
+    "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWdzejQ5Ym14enI3eGFkMWthbjYzZzZjanJoM2tjcmRkc3A2bmZqcSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3ZlZoVTAswo3LSg5Al/giphy.gif",
+    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeGJzeTJoYTR5Y252ajRiNzZkdXB4cWowbTdtMHI0dmdndGswbjhuYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V5huUSKSZEKcesHkXr/giphy.gif",
+     "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbjF2ZHg1eXJicmd6bDNxMnJ3Nmk3c3RqZHc4MDlwaGV6YXN2bGkzayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/t8dJg27xBCCy7zFOuC/giphy.gif",
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2p2ZGN1OGtodHM5dXVtMGY5NTE4YzFjbGp1aXN2OWJsbW5zZTFlbyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/28ew5fEZVHbDVhYyz4/giphy.gif",
+      "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExYWJjZG5yZjNoYjFuNWZsbXFqM3ltZzV2ZzA4dnlvMGE5bnMwenA3aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/5YiOVriSyDslMERQL1/giphy.gif",
+       "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExc2tjc2tydjI0eWoxZWltaThiaHlsNXlnNnNveW0weXpodm00NDRreiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/8Fu0UrG1Rpag9fuAGa/giphy.gif",
+    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExbzN0MmFlaHZiOHExMG5wdzlzdHhiZ2tyZDl0dHo2cm1lcWZ6eDh1ZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/K18Gm4PXb0cW5xSXpf/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExdXl5bHJpNHhsNHM3d3d4NG51aTNiMnV5azY4eG9lejNvMHc3dXhpdCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/bjl4GpQCeGQC950b95/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTdwbzc5bGt1NXl6cTltemZzNHc2cHh1Mml5dDR0Mmk3dmd1NWpnOCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/7b9TpfKcAWMUOJGxoX/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOTIyZWZ2eDM1ZmN4c2ZuNXozdDdiMGVkbnRqY28xYXhzdTZheW9qOSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/9XuhkqKBm8TSg/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3OWppMTdoNWN3Z3RhcnFkeGJsczFhZGkzMnpiMm5rZXN2bXJsbWsyYSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/2cu70yrTm5TBm/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcGJvYXF5Mjd6d21nMjVoeDg3eXl2dnNodGs0ajYzcnlpNGZ1N25xaCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/c6MfQ6dOO1lra/giphy.gif",
+    "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMTlreDd5cmNzMGtzNHdheXBpZjRsY2dmb2xob3NqdGg3bTJqdjVlZiZlcD12MV9naWZzX3NlYXJjaCZjdD1n/11MICB2ZmzK036/giphy.gif"
+
+  ]
+}
 
 
 
