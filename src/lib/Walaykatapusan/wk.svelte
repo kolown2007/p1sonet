@@ -2,13 +2,14 @@
     import { onMount } from 'svelte';
     import { SceneDirector, VideoScene, GifScene } from '$lib/Walaykatapusan/scenemanager';
     import { getChannel } from '$lib/Walaykatapusan/ably';
-    import content from '$lib/Walaykatapusan/content.json';
+
+    const UPLOAD_RETENTION_MS = 15 * 60 * 1000;
 
     let container: HTMLDivElement | null = null;
     let subtitleHost: HTMLDivElement | null = null;
     let director: SceneDirector | null = null;
     let imageUploadsChannel: any | null = null;
-    let pendingUploadUrls: string[] = [];
+    let pendingUploadUrls: Array<{ url: string; expiresAt: number }> = [];
     let uploadSceneCounter = 0;
 
     export let rotateLayout = false;
@@ -25,27 +26,57 @@
     }
 
     interface CompactContent {
-        videos: string[];
-        gifs: string[];
+        videos?: string[];
+        gifs?: string[];
+        images?: string[];
     }
 
     const feedAlgorithm: FeedAlgorithm = 'random';
 
-    const scenes: BaseScene[] = [
-        ...(content as CompactContent).videos.map((src, index) => ({
-            type: 'videoScene' as const,
-            id: `video-${index + 1}`,
-            src,
-            loop: true,
-            muted: true
-        })),
-        ...(content as CompactContent).gifs.map((src, index) => ({
-            type: 'GifScene' as const,
-            id: `gif-${index + 1}`,
-            src,
-            objectFit: 'cover' as const
-        }))
-    ];
+    const normalizeMediaUrl = (value: string): string => {
+        const trimmed = value.trim();
+        const match = trimmed.match(/https?:\/\/[^\s)]+/);
+
+        if (match?.[0]) {
+            return match[0].replace(/[)>]+$/, '');
+        }
+
+        return trimmed.replace(/^\[|\]$/g, '').replace(/^\(|\)$/g, '');
+    };
+
+    const buildScenes = (content: CompactContent): BaseScene[] => {
+        const videos = (content.videos ?? []).map(normalizeMediaUrl).filter(Boolean);
+        const gifs = (content.gifs ?? []).concat(content.images ?? []).map(normalizeMediaUrl).filter(Boolean);
+
+        return [
+            ...videos.map((src, index) => ({
+                type: 'videoScene' as const,
+                id: `video-${index + 1}`,
+                src,
+                loop: true,
+                muted: true
+            })),
+            ...gifs.map((src, index) => ({
+                type: 'GifScene' as const,
+                id: `gif-${index + 1}`,
+                src,
+                objectFit: 'cover' as const
+            }))
+        ];
+    };
+
+    let scenes: BaseScene[] = [];
+
+    const loadContent = async (): Promise<void> => {
+        const response = await fetch('https://kolown.net/api/get_walaykatapusan');
+
+        if (!response.ok) {
+            throw new Error(`Failed to load Walaykatapusan content: ${response.status}`);
+        }
+
+        const content = (await response.json()) as CompactContent;
+        scenes = buildScenes(content);
+    };
 
     const preloadAssets = (scenes: BaseScene[]): Promise<void[]> => {
         const promiseList = scenes
@@ -93,9 +124,31 @@
         }
     };
 
+    const pruneExpiredUploads = () => {
+        const now = Date.now();
+        pendingUploadUrls = pendingUploadUrls.filter((entry) => entry.expiresAt > now);
+    };
+
     const enqueueUploadedImage = (url: string) => {
+        const normalizedUrl = normalizeMediaUrl(url);
+
+        if (!normalizedUrl) {
+            return;
+        }
+
+        pruneExpiredUploads();
+
+        const existing = pendingUploadUrls.find((entry) => entry.url === normalizedUrl);
+        if (existing) {
+            existing.expiresAt = Date.now() + UPLOAD_RETENTION_MS;
+            return;
+        }
+
         if (!director) {
-            pendingUploadUrls.push(url);
+            pendingUploadUrls.push({
+                url: normalizedUrl,
+                expiresAt: Date.now() + UPLOAD_RETENTION_MS
+            });
             return;
         }
 
@@ -103,11 +156,16 @@
         director.register(
             new GifScene({
                 id,
-                src: url,
+                src: normalizedUrl,
                 objectFit: 'cover'
             })
         );
         director.enqueueScene(id, true);
+
+        pendingUploadUrls.push({
+            url: normalizedUrl,
+            expiresAt: Date.now() + UPLOAD_RETENTION_MS
+        });
     };
 
     const setupImageUploadChannel = async () => {
@@ -125,6 +183,13 @@
     const initializeDirector = async () => {
         if (!container) return;
 
+        try {
+            await loadContent();
+        } catch (error) {
+            console.error('[walaykatapusan] failed to load content from API', error);
+            scenes = [];
+        }
+
         await preloadAssets(scenes);
         await setupImageUploadChannel();
 
@@ -140,7 +205,7 @@
         });
 
         scenes.forEach(registerScene);
-        pendingUploadUrls.forEach(enqueueUploadedImage);
+        pendingUploadUrls.forEach((entry) => enqueueUploadedImage(entry.url));
         pendingUploadUrls = [];
 
         await director.next('init');
