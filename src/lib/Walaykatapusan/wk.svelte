@@ -2,85 +2,80 @@
     import { onMount } from 'svelte';
     import { SceneDirector, VideoScene, GifScene } from '$lib/Walaykatapusan/scenemanager';
     import { getChannel } from '$lib/Walaykatapusan/ably';
+    import {
+        buildScenes,
+        fetchWalaykatapusanContent,
+        normalizeMediaUrl,
+        type CompactContent,
+        type FeedScene
+    } from '$lib/Walaykatapusan/feed';
 
     const UPLOAD_RETENTION_MS = 15 * 60 * 1000;
+    const SERVER_REFRESH_MS = 15 * 60 * 1000;
 
     let container: HTMLDivElement | null = null;
     let subtitleHost: HTMLDivElement | null = null;
     let director: SceneDirector | null = null;
     let imageUploadsChannel: any | null = null;
-    let pendingUploadUrls: Array<{ url: string; expiresAt: number }> = [];
     let uploadSceneCounter = 0;
+    let mediaRegistry = new Map<
+        string,
+        { expiresAt: number; source: 'api' | 'ably'; sceneId: string; type: 'videoScene' | 'GifScene' }
+    >();
 
     export let rotateLayout = false;
 
     type FeedAlgorithm = 'linear' | 'random';
 
-    interface BaseScene {
-        type: 'videoScene' | 'GifScene';
-        id: string;
-        src: string;
-        objectFit?: 'cover' | 'none' | 'contain' | 'fill' | 'scale-down';
-        loop?: boolean;
-        muted?: boolean;
-    }
-
-    interface CompactContent {
-        videos?: string[];
-        gifs?: string[];
-        images?: string[];
-    }
-
     const feedAlgorithm: FeedAlgorithm = 'random';
+    let scenes: FeedScene[] = [];
 
-    const normalizeMediaUrl = (value: string): string => {
-        const trimmed = value.trim();
-        const match = trimmed.match(/https?:\/\/[^\s)]+/);
+    const buildSceneId = (kind: 'videoScene' | 'GifScene', url: string): string => {
+        const hash = Array.from(url).reduce((acc, char) => {
+            return (acc * 31 + char.charCodeAt(0)) >>> 0;
+        }, 0);
 
-        if (match?.[0]) {
-            return match[0].replace(/[)>]+$/, '');
-        }
-
-        return trimmed.replace(/^\[|\]$/g, '').replace(/^\(|\)$/g, '');
+        return `${kind}-${hash.toString(16)}`;
     };
-
-    const buildScenes = (content: CompactContent): BaseScene[] => {
-        const videos = (content.videos ?? []).map(normalizeMediaUrl).filter(Boolean);
-        const gifs = (content.gifs ?? []).concat(content.images ?? []).map(normalizeMediaUrl).filter(Boolean);
-
-        return [
-            ...videos.map((src, index) => ({
-                type: 'videoScene' as const,
-                id: `video-${index + 1}`,
-                src,
-                loop: true,
-                muted: true
-            })),
-            ...gifs.map((src, index) => ({
-                type: 'GifScene' as const,
-                id: `gif-${index + 1}`,
-                src,
-                objectFit: 'cover' as const
-            }))
-        ];
-    };
-
-    let scenes: BaseScene[] = [];
 
     const loadContent = async (): Promise<void> => {
-        const response = await fetch('https://kolown.net/api/get_walaykatapusan');
-
-        if (!response.ok) {
-            throw new Error(`Failed to load Walaykatapusan content: ${response.status}`);
-        }
-
-        const content = (await response.json()) as CompactContent;
+        const content = await fetchWalaykatapusanContent();
         scenes = buildScenes(content);
     };
 
-    const preloadAssets = (scenes: BaseScene[]): Promise<void[]> => {
+    const syncServerFeed = async (): Promise<void> => {
+        const content = await fetchWalaykatapusanContent();
+        const nextScenes = buildScenes(content);
+
+        for (const scene of nextScenes) {
+            const url = normalizeMediaUrl(scene.src);
+            if (!url) continue;
+
+            const existing = mediaRegistry.get(url);
+            if (existing) {
+                existing.expiresAt = Number.POSITIVE_INFINITY;
+                continue;
+            }
+
+            const sceneId = buildSceneId(scene.type, url);
+            mediaRegistry.set(url, {
+                expiresAt: Number.POSITIVE_INFINITY,
+                source: 'api',
+                sceneId,
+                type: scene.type
+            });
+
+            if (!director) continue;
+            if (director.getScene(sceneId)) continue;
+            registerScene({ ...scene, id: sceneId });
+        }
+
+        scenes = nextScenes;
+    };
+
+    const preloadAssets = (scenes: FeedScene[]): Promise<void[]> => {
         const promiseList = scenes
-            .filter((scene): scene is BaseScene & { type: 'videoScene' } => scene.type === 'videoScene')
+            .filter((scene): scene is FeedScene & { type: 'videoScene' } => scene.type === 'videoScene')
             .map((scene) => {
                 return new Promise<void>((resolve) => {
                     const video = document.createElement('video');
@@ -101,8 +96,9 @@
         return Promise.all(promiseList);
     };
 
-    const registerScene = (scene: BaseScene) => {
+    const registerScene = (scene: FeedScene) => {
         if (!director) return;
+        if (director.getScene(scene.id)) return;
 
         if (scene.type === 'videoScene') {
             director.register(
@@ -126,7 +122,42 @@
 
     const pruneExpiredUploads = () => {
         const now = Date.now();
-        pendingUploadUrls = pendingUploadUrls.filter((entry) => entry.expiresAt > now);
+
+        for (const [url, entry] of mediaRegistry.entries()) {
+            if (entry.source === 'ably' && entry.expiresAt <= now) {
+                mediaRegistry.delete(url);
+
+                if (director?.getScene(entry.sceneId)) {
+                    void director.destroy(entry.sceneId, 'manual');
+                }
+            }
+        }
+    };
+
+    const rememberActiveMedia = (url: string, ttlMs: number, source: 'api' | 'ably', scene: FeedScene): boolean => {
+        const normalizedUrl = normalizeMediaUrl(url);
+        if (!normalizedUrl) {
+            return false;
+        }
+
+        pruneExpiredUploads();
+
+        const existing = mediaRegistry.get(normalizedUrl);
+        if (existing) {
+            if (source === 'ably') {
+                existing.expiresAt = Date.now() + ttlMs;
+            }
+            return false;
+        }
+
+        const expiresAt = source === 'ably' ? Date.now() + ttlMs : Number.POSITIVE_INFINITY;
+        mediaRegistry.set(normalizedUrl, {
+            expiresAt,
+            source,
+            sceneId: scene.id,
+            type: scene.type
+        });
+        return true;
     };
 
     const enqueueUploadedImage = (url: string) => {
@@ -136,36 +167,23 @@
             return;
         }
 
-        pruneExpiredUploads();
+        const scene: FeedScene = {
+            type: 'GifScene',
+            id: `upload-${Date.now()}-${uploadSceneCounter++}`,
+            src: normalizedUrl,
+            objectFit: 'cover'
+        };
 
-        const existing = pendingUploadUrls.find((entry) => entry.url === normalizedUrl);
-        if (existing) {
-            existing.expiresAt = Date.now() + UPLOAD_RETENTION_MS;
+        if (!rememberActiveMedia(normalizedUrl, UPLOAD_RETENTION_MS, 'ably', scene)) {
             return;
         }
 
         if (!director) {
-            pendingUploadUrls.push({
-                url: normalizedUrl,
-                expiresAt: Date.now() + UPLOAD_RETENTION_MS
-            });
             return;
         }
 
-        const id = `upload-${Date.now()}-${uploadSceneCounter++}`;
-        director.register(
-            new GifScene({
-                id,
-                src: normalizedUrl,
-                objectFit: 'cover'
-            })
-        );
-        director.enqueueScene(id, true);
-
-        pendingUploadUrls.push({
-            url: normalizedUrl,
-            expiresAt: Date.now() + UPLOAD_RETENTION_MS
-        });
+        registerScene(scene);
+        director.enqueueScene(scene.id, true);
     };
 
     const setupImageUploadChannel = async () => {
@@ -204,15 +222,29 @@
             ...(rotateLayout && subtitleHost ? { subtitleContainer: subtitleHost } : {})
         });
 
-        scenes.forEach(registerScene);
-        pendingUploadUrls.forEach((entry) => enqueueUploadedImage(entry.url));
-        pendingUploadUrls = [];
+        scenes.forEach((scene) => {
+            const normalizedUrl = normalizeMediaUrl(scene.src);
+            if (!normalizedUrl) return;
+
+            const sceneId = scene.id;
+            const entry = mediaRegistry.get(normalizedUrl);
+            if (!entry) {
+                mediaRegistry.set(normalizedUrl, {
+                    expiresAt: Number.POSITIVE_INFINITY,
+                    source: 'api',
+                    sceneId,
+                    type: scene.type
+                });
+            }
+            registerScene({ ...scene, id: sceneId });
+        });
 
         await director.next('init');
     };
 
     onMount(() => {
         let rotateTimer: number | null = null;
+        let serverRefreshTimer: number | null = null;
 
         void initializeDirector();
 
@@ -220,9 +252,19 @@
             director?.next('algorithm');
         }, 8000);
 
+        serverRefreshTimer = window.setInterval(() => {
+            void syncServerFeed().catch((error) => {
+                console.error('[walaykatapusan] failed to refresh content from API', error);
+            });
+        }, SERVER_REFRESH_MS);
+
         return () => {
             if (rotateTimer !== null) {
                 window.clearInterval(rotateTimer);
+            }
+
+            if (serverRefreshTimer !== null) {
+                window.clearInterval(serverRefreshTimer);
             }
 
             if (director) {

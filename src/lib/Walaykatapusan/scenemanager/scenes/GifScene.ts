@@ -12,11 +12,13 @@ export interface GifSceneOptions {
 
 export class GifScene extends SceneBase {
 	private readonly options: GifSceneOptions;
+	private readonly sourceUrl: string;
 	private element?: HTMLImageElement;
 
 	public constructor(options: GifSceneOptions) {
 		super(options.id, 'image');
 		this.options = options;
+		this.sourceUrl = options.src;
 	}
 
 	protected override async onLoad(_context: SceneContext): Promise<void> {
@@ -25,7 +27,7 @@ export class GifScene extends SceneBase {
 		}
 
 		const img = document.createElement('img');
-		img.src = this.options.src;
+		img.src = this.sourceUrl;
 		img.className = this.options.className ?? '';
 		img.style.cssText = [
 			'width:100%',
@@ -34,10 +36,21 @@ export class GifScene extends SceneBase {
 			'display:none'
 		].join(';');
 
-		// Wait for the first frame to decode so the transition isn't blank
+		// Wait for the first frame to decode so the transition isn't blank.
 		await img.decode().catch(() => undefined);
-
 		this.element = img;
+	}
+
+	private restartAnimation(): void {
+		if (!this.element) {
+			return;
+		}
+
+		// Force the browser to restart the GIF sequence. Reusing the same image element
+		// while toggling display can leave the animation in a partially played state.
+		const currentSrc = this.element.currentSrc || this.element.src || this.sourceUrl;
+		this.element.src = '';
+		this.element.src = currentSrc;
 	}
 
 	protected override async onStart(context: SceneContext): Promise<void> {
@@ -49,6 +62,7 @@ export class GifScene extends SceneBase {
 			context.container.appendChild(this.element);
 		}
 
+		this.restartAnimation();
 		this.element.style.display = 'block';
 	}
 
