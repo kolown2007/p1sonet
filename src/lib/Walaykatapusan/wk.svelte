@@ -289,7 +289,7 @@
     <title>Walay Katapusan</title>
 </svelte:head>
 
-<main class:rotated={rotateLayout}>
+<main class:rotated={rotateLayout} class:monochrome={true}>
     <div bind:this={container} class="scene-root"></div>
 
     {#if rotateLayout}
@@ -301,7 +301,10 @@
     main {
         position: fixed;
         inset: 0;
-        background: #111;
+        background:
+            linear-gradient(180deg, rgba(255,245,240,0.12), rgba(120,0,18,0.04)),
+            url('https://kolown.net/storage/library/chronoescape/loading/kraftpaper.png') center/cover no-repeat;
+        isolation: isolate;
     }
 
     main.rotated {
@@ -314,11 +317,53 @@
         transform-origin: center;
     }
 
+    main.monochrome .scene-root {
+        filter: grayscale(1) contrast(0.72) brightness(1.02) saturate(0) sepia(0.08);
+        opacity: 0.8;
+    }
+
+    main.monochrome::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle at 50% 50%, rgba(120, 0, 18, 0.18) 0%, rgba(120, 0, 18, 0.09) 26%, transparent 58%),
+            linear-gradient(180deg, rgba(120, 0, 18, 0.12), rgba(40, 0, 5, 0.18));
+        mix-blend-mode: multiply;
+        opacity: 0.9;
+        pointer-events: none;
+        z-index: 2;
+    }
+
+    main.monochrome::after {
+        content: '';
+        position: absolute;
+        inset: -8%;
+        background:
+            linear-gradient(120deg, transparent 0%, rgba(0,0,0,0.04) 30%, transparent 35%, transparent 42%, rgba(0,0,0,0.03) 48%, transparent 52%, transparent 58%, rgba(0,0,0,0.04) 64%, transparent 70%),
+            linear-gradient(180deg, rgba(255,255,255,0.018), rgba(0,0,0,0.08)),
+            radial-gradient(circle, rgba(0, 0, 0, 0.12) 0 0.7px, transparent 1.1px) 0 0 / 9px 9px,
+            repeating-linear-gradient(
+                0deg,
+                rgba(255,255,255,0.012),
+                rgba(255,255,255,0.012) 1px,
+                rgba(0,0,0,0.012) 1px,
+                rgba(0,0,0,0.012) 4px
+            );
+        mix-blend-mode: multiply;
+        opacity: 0.9;
+        pointer-events: none;
+        z-index: 3;
+    }
+
     .scene-root {
+        position: relative;
+        z-index: 1;
         width: 100%;
         height: 100%;
         overflow: hidden;
         background: #111;
+        transition: filter 250ms ease;
     }
 
     .subtitle-host {
