@@ -61,7 +61,7 @@
       }
 
       // Add a sprite every 3 seconds
-      interval = setInterval(addRandomSprite, 3000) as unknown as number;
+      interval = setInterval(addRandomSprite, 900) as unknown as number;
 
       // Add initial sprite
       addRandomSprite();
